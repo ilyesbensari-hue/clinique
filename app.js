@@ -359,6 +359,14 @@ function initPatientModal(data) {
   $('p-medecin-ref').innerHTML = '<option value="">— Aucun —</option>' +
     meds.map(m => `<option value="${m.id}">${fullName(m)} (${m.specialite})</option>`).join('');
 
+  // Populate wilaya select
+  $('p-wilaya').innerHTML = '<option value="">— Sélectionner —</option>' +
+    WILAYAS_DZ.map(w => `<option value="${w}">${w}</option>`).join('');
+
+  // Populate organisme select
+  $('p-organisme').innerHTML = ORGANISMES_ASSURANCE.map(o =>
+    `<option value="${o.id}">${o.label} (${o.taux}%)</option>`).join('');
+
   if (data) {
     $('modal-patient-title').textContent = 'Modifier le patient';
     $('patient-edit-id').value = data.id;
@@ -370,20 +378,30 @@ function initPatientModal(data) {
     $('p-email').value = data.email || '';
     $('p-adresse').value = data.adresse || '';
     $('p-groupe').value = data.groupeSanguin || '';
-    $('p-mutuelle').value = data.mutuelle || 'Aucune';
     $('p-medecin-ref').value = data.medecinRef || '';
     $('p-statut').value = data.statut || 'Actif';
     $('p-antecedents').value = data.antecedents || '';
     $('p-allergies').value = data.allergies || '';
     $('p-traitement').value = data.traitement || '';
+    // Algeria fields
+    $('p-organisme').value = data.organisme || 'aucun';
+    $('p-chifa').value = data.numChifa || '';
+    $('p-matricule').value = data.numMatricule || '';
+    $('p-type-assure').value = data.typeAssure || 'Assuré principal';
+    $('p-type-cas').value = data.typeCas || 'Maladie ordinaire';
+    $('p-wilaya').value = data.wilaya || '';
+    $('p-commune').value = data.commune || '';
   } else {
     $('modal-patient-title').textContent = 'Nouveau patient';
     $('patient-edit-id').value = '';
-    ['p-prenom','p-nom','p-tel','p-email','p-adresse','p-antecedents','p-allergies','p-traitement'].forEach(id => $(id).value = '');
+    ['p-prenom','p-nom','p-tel','p-email','p-adresse','p-antecedents','p-allergies','p-traitement','p-chifa','p-matricule','p-commune'].forEach(id => $(id).value = '');
     $('p-dob').value = '';
     $('p-genre').value = 'M';
     $('p-groupe').value = '';
-    $('p-mutuelle').value = 'CNAS';
+    $('p-organisme').value = 'CNAS';
+    $('p-type-assure').value = 'Assuré principal';
+    $('p-type-cas').value = 'Maladie ordinaire';
+    $('p-wilaya').value = '';
     $('p-medecin-ref').value = '';
     $('p-statut').value = 'Actif';
   }
@@ -404,7 +422,13 @@ function savePatient() {
     email: $('p-email').value,
     adresse: $('p-adresse').value,
     groupeSanguin: $('p-groupe').value,
-    mutuelle: $('p-mutuelle').value,
+    organisme: $('p-organisme').value,
+    numChifa: $('p-chifa').value.replace(/\s/g,''),
+    numMatricule: $('p-matricule').value,
+    typeAssure: $('p-type-assure').value,
+    typeCas: $('p-type-cas').value,
+    wilaya: $('p-wilaya').value,
+    commune: $('p-commune').value,
     medecinRef: $('p-medecin-ref').value,
     statut: $('p-statut').value,
     antecedents: $('p-antecedents').value,
@@ -452,7 +476,9 @@ function viewPatient(id) {
         <div class="patient-detail-tags">
           ${p.groupeSanguin ? `<span class="badge badge-red">${p.groupeSanguin}</span>` : ''}
           ${statusBadge(p.statut || 'Actif')}
-          ${p.mutuelle ? `<span class="badge badge-blue">${p.mutuelle}</span>` : ''}
+          ${p.organisme && p.organisme !== 'aucun' ? `<span class="badge badge-blue chifa-badge">🏥 ${(ORGANISMES_ASSURANCE.find(o=>o.id===p.organisme)||{label:p.organisme}).label}</span>` : '<span class="badge badge-gray">Sans assurance</span>'}
+          ${p.numChifa ? `<span class="badge badge-teal" title="Carte Chifa">🪪 ${formatChifa(p.numChifa)}</span>` : ''}
+          ${p.wilaya ? `<span class="badge badge-gray">📍 ${p.wilaya}</span>` : ''}
           ${p.allergies ? `<span class="badge badge-amber">⚠ Allergie: ${p.allergies}</span>` : ''}
         </div>
       </div>
@@ -1074,11 +1100,46 @@ function updateFactTotal() {
   let total = 0;
   document.querySelectorAll('#fact-actes-container .acte-row input[type=number]').forEach(inp => { total += Number(inp.value) || 0; });
   if ($('fact-total-display')) $('fact-total-display').textContent = fmtMoney(total);
+  updateTiersPayantCalc(total);
+}
+
+function onFactPatientChange() {
+  const patId = $('fact-patient').value;
+  if (!patId) { if ($('fact-tiers-section')) $('fact-tiers-section').style.display = 'none'; return; }
+  const p = getAll('patients').find(x => x.id === patId);
+  if (!p || !p.organisme || p.organisme === 'aucun') {
+    if ($('fact-tiers-section')) $('fact-tiers-section').style.display = 'none';
+    return;
+  }
+  const org = ORGANISMES_ASSURANCE.find(o => o.id === p.organisme);
+  if (!org) return;
+  $('fact-tiers-section').style.display = 'block';
+  $('fact-tp-organisme').textContent = org.label;
+  $('fact-tp-taux').textContent = org.taux + '%';
+  $('fact-tp-chifa').textContent = p.numChifa ? formatChifa(p.numChifa) : '—';
+  let total = 0;
+  document.querySelectorAll('#fact-actes-container .acte-row input[type=number]').forEach(inp => { total += Number(inp.value) || 0; });
+  updateTiersPayantCalc(total);
+}
+
+function updateTiersPayantCalc(total) {
+  if (!$('fact-tiers-section') || $('fact-tiers-section').style.display === 'none') return;
+  const patId = $('fact-patient')?.value;
+  if (!patId) return;
+  const p = getAll('patients').find(x => x.id === patId);
+  if (!p || !p.organisme || p.organisme === 'aucun') return;
+  const org = ORGANISMES_ASSURANCE.find(o => o.id === p.organisme);
+  if (!org) return;
+  const partOrg = Math.round(total * org.taux / 100);
+  const partPat = total - partOrg;
+  $('fact-tp-org-part').textContent = fmtMoney(partOrg);
+  $('fact-tp-patient-part').textContent = fmtMoney(partPat);
 }
 
 function initFactureModal(data) {
   populateFactureSelects();
   $('fact-actes-container').innerHTML = '';
+  if ($('fact-tiers-section')) $('fact-tiers-section').style.display = 'none';
   if (data) {
     $('modal-facture-title').textContent = 'Modifier la facture';
     $('fact-edit-id').value = data.id;
@@ -1089,6 +1150,7 @@ function initFactureModal(data) {
     $('fact-status').value = data.status;
     $('fact-notes').value = data.notes || '';
     data.actes.forEach(a => addActeRow(a.libelle, a.montant));
+    onFactPatientChange();
   } else {
     $('modal-facture-title').textContent = 'Nouvelle facture';
     $('fact-edit-id').value = '';
@@ -1116,12 +1178,21 @@ function saveFacture() {
 
   const factures = getAll('factures');
   const editId = $('fact-edit-id').value;
+  const p = getAll('patients').find(x => x.id === patId);
+  const org = p && p.organisme && p.organisme !== 'aucun' ? ORGANISMES_ASSURANCE.find(o => o.id === p.organisme) : null;
+  const total = actes.reduce((s,a) => s + a.montant, 0);
+  const tiersPayant = !!org;
+  const tauxRembours = org ? org.taux : 0;
+  const partOrganisme = tiersPayant ? Math.round(total * tauxRembours / 100) : 0;
+  const ticketModerateur = total - partOrganisme;
   const obj = {
     patientId: patId, medecinId: $('fact-medecin').value,
     date: $('fact-date').value, actes,
     paiement: $('fact-paiement').value,
     status: $('fact-status').value,
-    notes: $('fact-notes').value
+    notes: $('fact-notes').value,
+    tiersPayant, organismeId: p?.organisme || null, tauxRemboursement: tauxRembours,
+    partOrganisme, ticketModerateur
   };
 
   if (editId) {
@@ -1180,12 +1251,27 @@ function viewInvoice(id) {
         <tbody>${f.actes.map(a => `<tr><td>${a.libelle}</td><td style="text-align:right;font-weight:500;">${fmtMoney(a.montant)}</td></tr>`).join('')}</tbody>
         <tfoot><tr class="inv-total-row"><td>TOTAL</td><td style="text-align:right;">${fmtMoney(total)}</td></tr></tfoot>
       </table>
+      ${f.tiersPayant ? (() => {
+        const org = ORGANISMES_ASSURANCE.find(o => o.id === f.organismeId);
+        return `<div style="margin-top:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#166534;margin-bottom:8px;">Tiers payant — Sécurité sociale</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px;">
+            <div><div style="color:#6b7280;">Organisme</div><div style="font-weight:600;">${org ? org.label : f.organismeId}</div></div>
+            <div><div style="color:#6b7280;">Taux</div><div style="font-weight:600;color:#059669;">${f.tauxRemboursement}%</div></div>
+            <div><div style="color:#6b7280;">N° Chifa</div><div style="font-weight:600;font-family:monospace;">${p && p.numChifa ? formatChifa(p.numChifa) : '—'}</div></div>
+            <div><div style="color:#6b7280;">Part organisme</div><div style="font-weight:700;color:#2563eb;">${fmtMoney(f.partOrganisme)}</div></div>
+            <div><div style="color:#6b7280;">Ticket modérateur</div><div style="font-weight:700;color:#d97706;">${fmtMoney(f.ticketModerateur)}</div></div>
+          </div>
+        </div>`;
+      })() : ''}
       <div style="margin-top:18px;display:flex;justify-content:space-between;font-size:13px;">
         <div>Mode de paiement : <strong>${f.paiement||'—'}</strong></div>
         ${f.notes ? `<div style="color:var(--text2);">Note : ${f.notes}</div>` : ''}
       </div>
       <div style="margin-top:28px;border-top:1px solid var(--border);padding-top:14px;font-size:11px;color:var(--text3);text-align:center;">
-        ${settings.clinique} · ${settings.adresse||''} · ${settings.tel||''}<br>
+        ${settings.clinique} · ${settings.adresse||''} · ${settings.tel||''}
+        ${settings.numConventionCNAS ? ` · Conv. CNAS : ${settings.numConventionCNAS}` : ''}
+        ${settings.numAgrementSante ? ` · Agrément : ${settings.numAgrementSante}` : ''}<br>
         Merci de votre confiance.
       </div>
     </div>`;
@@ -1201,9 +1287,19 @@ function renderParametres() {
   if ($('cfg-slogan')) $('cfg-slogan').value = s.slogan||'';
   if ($('cfg-addr')) $('cfg-addr').value = s.adresse||'';
   if ($('cfg-tel')) $('cfg-tel').value = s.tel||'';
+  if ($('cfg-fax')) $('cfg-fax').value = s.fax||'';
   if ($('cfg-email')) $('cfg-email').value = s.email||'';
   if ($('cfg-fiscal')) $('cfg-fiscal').value = s.fiscal||'';
+  if ($('cfg-rc')) $('cfg-rc').value = s.registreCommerce||'';
   if ($('cfg-horaires')) $('cfg-horaires').value = s.horaires||'';
+  if ($('cfg-conv-cnas')) $('cfg-conv-cnas').value = s.numConventionCNAS||'';
+  if ($('cfg-conv-casnos')) $('cfg-conv-casnos').value = s.numConventionCASNOS||'';
+  if ($('cfg-agrement')) $('cfg-agrement').value = s.numAgrementSante||'';
+  // Populate and set wilaya
+  if ($('cfg-wilaya')) {
+    $('cfg-wilaya').innerHTML = '<option value="">— Sélectionner —</option>' +
+      WILAYAS_DZ.map(w => `<option value="${w}" ${w===s.wilaya?'selected':''}>${w}</option>`).join('');
+  }
   if ($('clinic-name-sidebar')) $('clinic-name-sidebar').textContent = s.clinique||'Clinique';
   renderTarifsList();
   renderUsersList();
@@ -1214,10 +1310,16 @@ function saveSettings() {
     clinique: $('cfg-name').value,
     slogan: $('cfg-slogan').value,
     adresse: $('cfg-addr').value,
+    wilaya: $('cfg-wilaya').value,
     tel: $('cfg-tel').value,
+    fax: $('cfg-fax').value,
     email: $('cfg-email').value,
     fiscal: $('cfg-fiscal').value,
+    registreCommerce: $('cfg-rc').value,
     horaires: $('cfg-horaires').value,
+    numConventionCNAS: $('cfg-conv-cnas').value,
+    numConventionCASNOS: $('cfg-conv-casnos').value,
+    numAgrementSante: $('cfg-agrement').value,
   });
   if ($('clinic-name-sidebar')) $('clinic-name-sidebar').textContent = $('cfg-name').value;
   toast('Paramètres enregistrés ✓', 'success');

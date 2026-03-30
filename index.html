@@ -404,10 +404,19 @@
                   <div class="form-group"><label>Nom de la clinique</label><input id="cfg-name" type="text"/></div>
                   <div class="form-group"><label>Slogan</label><input id="cfg-slogan" type="text"/></div>
                   <div class="form-group"><label>Adresse</label><input id="cfg-addr" type="text"/></div>
+                  <div class="form-group"><label>Wilaya</label><select id="cfg-wilaya"></select></div>
                   <div class="form-group"><label>Téléphone</label><input id="cfg-tel" type="text"/></div>
+                  <div class="form-group"><label>Fax</label><input id="cfg-fax" type="text"/></div>
                   <div class="form-group"><label>Email</label><input id="cfg-email" type="email"/></div>
                   <div class="form-group"><label>N° Fiscal / NIS</label><input id="cfg-fiscal" type="text"/></div>
+                  <div class="form-group"><label>Registre du commerce</label><input id="cfg-rc" type="text"/></div>
                   <div class="form-group"><label>Horaires d'ouverture</label><input id="cfg-horaires" type="text"/></div>
+                </div>
+                <div class="form-divider" style="margin:14px 0 10px;">Conventions & Agrément</div>
+                <div class="form-grid full">
+                  <div class="form-group"><label>N° Convention CNAS</label><input id="cfg-conv-cnas" type="text" placeholder="Conv-CNAS-00000"/></div>
+                  <div class="form-group"><label>N° Convention CASNOS</label><input id="cfg-conv-casnos" type="text" placeholder="Conv-CASNOS-00000"/></div>
+                  <div class="form-group"><label>N° Agrément Santé</label><input id="cfg-agrement" type="text" placeholder="AGR-16-0000"/></div>
                 </div>
                 <button class="btn btn-primary" onclick="saveSettings()">Enregistrer</button>
               </div>
@@ -495,13 +504,34 @@
         <div class="form-group"><label>Email</label><input id="p-email" type="email" placeholder="email@exemple.com"/></div>
         <div class="form-group" style="grid-column:1/-1"><label>Adresse</label><input id="p-adresse" type="text" placeholder="Adresse complète"/></div>
       </div>
+      <div class="form-divider">Assurance Chifa</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Organisme d'assurance</label>
+          <select id="p-organisme"></select>
+        </div>
+        <div class="form-group"><label>N° Carte Chifa (20 chiffres)</label>
+          <input id="p-chifa" type="text" maxlength="20" placeholder="12345678901234567890"/>
+        </div>
+        <div class="form-group"><label>N° Matricule assuré</label>
+          <input id="p-matricule" type="text" placeholder="80031512345"/>
+        </div>
+        <div class="form-group"><label>Type assuré</label>
+          <select id="p-type-assure"><option>Assuré principal</option><option>Ayant droit</option></select>
+        </div>
+        <div class="form-group"><label>Type de cas</label>
+          <select id="p-type-cas"><option>Maladie ordinaire</option><option>ALD (Longue durée)</option><option>Accident du travail</option><option>Maternité</option><option>Sans assurance</option></select>
+        </div>
+        <div class="form-group"><label>Wilaya</label>
+          <select id="p-wilaya"></select>
+        </div>
+        <div class="form-group"><label>Commune</label>
+          <input id="p-commune" type="text" placeholder="Ex: Hussein Dey"/>
+        </div>
+      </div>
       <div class="form-divider">Informations médicales</div>
       <div class="form-grid">
         <div class="form-group"><label>Groupe sanguin</label>
           <select id="p-groupe"><option value="">-- Inconnu --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
-        </div>
-        <div class="form-group"><label>Mutuelle / Assurance</label>
-          <select id="p-mutuelle"><option value="Aucune">Aucune</option><option value="CNAS">CNAS</option><option value="CASNOS">CASNOS</option><option value="Retraite">Retraite</option><option value="Militaire">Militaire</option><option value="Autre">Autre</option></select>
         </div>
         <div class="form-group"><label>Médecin référent</label>
           <select id="p-medecin-ref"></select>
@@ -680,16 +710,27 @@
     <div class="modal-body">
       <input type="hidden" id="fact-edit-id"/>
       <div class="form-grid">
-        <div class="form-group"><label>Patient *</label><select id="fact-patient"></select></div>
+        <div class="form-group"><label>Patient *</label><select id="fact-patient" onchange="onFactPatientChange()"></select></div>
         <div class="form-group"><label>Médecin</label><select id="fact-medecin"></select></div>
         <div class="form-group"><label>Date *</label><input id="fact-date" type="date"/></div>
         <div class="form-group"><label>Mode de paiement</label>
-          <select id="fact-paiement"><option>Espèces</option><option>Chèque</option><option>Virement</option><option>CCP</option><option>CNAS</option></select>
+          <select id="fact-paiement"><option>Espèces</option><option>Chèque</option><option>Virement</option><option>CCP</option><option>Tiers payant CNAS</option><option>Tiers payant CASNOS</option></select>
         </div>
         <div class="form-group"><label>Statut</label>
           <select id="fact-status"><option>En attente</option><option>Payée</option><option>Annulée</option></select>
         </div>
         <div class="form-group"><label>Notes</label><input id="fact-notes" type="text" placeholder="Remarques…"/></div>
+      </div>
+      <!-- Tiers payant Algeria -->
+      <div id="fact-tiers-section" style="display:none;background:var(--blue-bg);border:1.5px solid var(--blue-border,#bfdbfe);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--blue-text);margin-bottom:10px;">Tiers Payant — Sécurité sociale</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:13px;">
+          <div><div style="color:var(--text3);font-size:11px;margin-bottom:2px;">Organisme</div><div id="fact-tp-organisme" style="font-weight:600;">—</div></div>
+          <div><div style="color:var(--text3);font-size:11px;margin-bottom:2px;">Taux de remboursement</div><div id="fact-tp-taux" style="font-weight:600;color:var(--green);">—</div></div>
+          <div><div style="color:var(--text3);font-size:11px;margin-bottom:2px;">N° Chifa</div><div id="fact-tp-chifa" style="font-weight:600;font-family:monospace;">—</div></div>
+          <div><div style="color:var(--text3);font-size:11px;margin-bottom:2px;">Part organisme</div><div id="fact-tp-org-part" style="font-weight:700;font-size:15px;color:var(--blue);">0 DA</div></div>
+          <div><div style="color:var(--text3);font-size:11px;margin-bottom:2px;">Ticket modérateur (patient)</div><div id="fact-tp-patient-part" style="font-weight:700;font-size:15px;color:var(--amber);">0 DA</div></div>
+        </div>
       </div>
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:10px;">Actes / Prestations</div>
       <div id="fact-actes-container"></div>
