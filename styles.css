@@ -720,6 +720,107 @@ textarea { resize: vertical; min-height: 80px; }
 }
 
 /* ============================================================
+   CLICHÉS IMAGERIE
+   ============================================================ */
+.cliche-upload-zone {
+  display: flex; align-items: center; gap: 12px;
+  border: 2px dashed var(--border2);
+  border-radius: 8px; padding: 18px 16px; cursor: pointer;
+  color: var(--text3); font-size: 13px; line-height: 1.5;
+  transition: border-color .2s, background .2s;
+}
+.cliche-upload-zone:hover { border-color: var(--blue); background: var(--blue-bg); }
+
+.cliche-preview-grid, .cliche-gallery {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;
+}
+.cliche-thumb {
+  position: relative; width: 100px; height: 90px;
+  border-radius: 8px; overflow: hidden; cursor: pointer;
+  border: 2px solid var(--border2); background: #000;
+  transition: transform .15s, box-shadow .15s;
+}
+.cliche-thumb:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.cliche-thumb img { width:100%; height:100%; object-fit:cover; opacity:.9; }
+.cliche-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.65); color: #fff;
+  font-size: 9px; padding: 3px 5px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cliche-del {
+  position: absolute; top: 3px; right: 3px;
+  width: 18px; height: 18px; border-radius: 50%; border: none;
+  background: rgba(220,38,38,.85); color: #fff; font-size: 12px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.cliche-del:hover { background: #dc2626; }
+
+/* Cliché zoom overlay */
+#modal-cliche-zoom.open { display: flex; background: rgba(0,0,0,.9); }
+
+/* ============================================================
+   ORDONNANCE ALGÉRIENNE
+   ============================================================ */
+.ordonnance-print {
+  font-family: 'Times New Roman', serif;
+  color: #111; max-width: 700px; margin: 0 auto;
+  font-size: 13px; line-height: 1.6;
+}
+.ordo-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 10px;
+}
+.ordo-clinic-name { font-size: 18px; font-weight: 700; color: #1e40af; }
+.ordo-clinic-addr, .ordo-clinic-contact { font-size: 11px; color: #4b5563; margin-top: 2px; }
+.ordo-num-box {
+  text-align: right; background: #f8fafc;
+  border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px;
+}
+.ordo-hr { border: none; border-top: 1.5px solid #d1d5db; margin: 10px 0; }
+.ordo-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+.ordo-medecin-box, .ordo-patient-box {
+  background: #f9fafb; border: 1px solid #e5e7eb;
+  border-radius: 6px; padding: 10px 12px;
+}
+.ordo-section-lbl {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: #6b7280; margin-bottom: 4px;
+}
+.ordo-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.ordo-spec { font-size: 12px; color: #374151; margin-bottom: 4px; font-style: italic; }
+.ordo-detail { font-size: 11px; color: #6b7280; margin-top: 1px; }
+.ordo-rx-title {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 14px; font-weight: 600; color: #1e40af;
+  margin: 14px 0 10px; text-transform: uppercase; letter-spacing: .05em;
+}
+.ordo-lines { padding: 0 6px; }
+.ordo-line {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 7px 0; border-bottom: 1px dashed #e5e7eb;
+  font-size: 13px;
+}
+.ordo-line:last-child { border-bottom: none; }
+.ordo-num {
+  min-width: 20px; height: 20px; background: #1e40af; color: #fff;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+.ordo-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
+.ordo-cachet-box {
+  margin-top: 6px; border: 1px solid #d1d5db; border-radius: 4px;
+  width: 200px; height: 70px; padding: 8px; font-size: 11px;
+  color: #374151; display: flex; align-items: flex-start;
+}
+.ordo-validity { text-align: right; }
+
+/* Button teal */
+.btn-teal { background: var(--teal-bg); color: var(--teal-text); border-color: transparent; }
+.btn-teal:hover { background: var(--teal); color: #fff; }
+
+/* ============================================================
    ALGERIA — Chifa / Tiers payant
    ============================================================ */
 .chifa-badge { font-family: monospace; letter-spacing: 0.03em; }
@@ -748,7 +849,10 @@ textarea { resize: vertical; min-height: 80px; }
    PRINT
    ============================================================ */
 @media print {
-  .sidebar, .topbar, .modal-header, .modal-footer, .btn { display: none !important; }
-  .modal { box-shadow: none; border: none; }
-  .invoice-print { padding: 0; }
+  body > *:not(#modal-ordonnance):not(#modal-invoice) { display: none !important; }
+  .overlay { position: static !important; background: none !important; overflow: visible !important; }
+  .modal { box-shadow: none !important; border: none !important; max-width: 100% !important; overflow: visible !important; }
+  .modal-header, .modal-footer, .btn, .sidebar, .topbar { display: none !important; }
+  .ordonnance-print, .invoice-print { padding: 0 !important; }
+  @page { margin: 15mm; size: A4; }
 }

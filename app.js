@@ -919,8 +919,13 @@ function renderConsultations() {
   }).join('') : `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text3);">Aucune consultation</td></tr>`;
 }
 
+// Temporary store for clichés being added in the current modal session
+let pendingCliches = [];
+
 function initConsultModal(data) {
   populateConsultSelects();
+  pendingCliches = [];
+  $('consult-cliche-preview').innerHTML = '';
   if (data) {
     $('modal-consultation-title').textContent = 'Modifier la consultation';
     $('consult-edit-id').value = data.id;
@@ -932,6 +937,9 @@ function initConsultModal(data) {
     $('consult-diagnostic').value = data.diagnostic || '';
     $('consult-ordonnance').value = data.ordonnance || '';
     $('consult-notes').value = data.notes || '';
+    // Load existing clichés
+    pendingCliches = data.cliches ? [...data.cliches] : [];
+    renderCliches();
   } else {
     $('modal-consultation-title').textContent = 'Nouvelle consultation';
     $('consult-edit-id').value = '';
@@ -940,6 +948,48 @@ function initConsultModal(data) {
     $('consult-date').value = getTodayStr();
     ['consult-motif','consult-examen','consult-diagnostic','consult-ordonnance','consult-notes'].forEach(id => $(id).value = '');
   }
+}
+
+function addCliches(input) {
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    if (file.size > 5 * 1024 * 1024) { toast(`${file.name} dépasse 5 Mo`, 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingCliches.push({ id: genId('img'), name: file.name, type: file.type, dataUrl: e.target.result, addedAt: getTodayStr() });
+      renderCliches();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderCliches() {
+  const container = $('consult-cliche-preview');
+  if (!container) return;
+  container.innerHTML = pendingCliches.map((img, i) => `
+    <div class="cliche-thumb" onclick="zoomCliche('${img.id}')">
+      <img src="${img.dataUrl}" alt="${img.name}" loading="lazy"/>
+      <div class="cliche-label">${img.name.length > 18 ? img.name.substring(0,16)+'…' : img.name}</div>
+      <button class="cliche-del" onclick="event.stopPropagation();removeCliche(${i})">×</button>
+    </div>`).join('');
+}
+
+function removeCliche(idx) {
+  pendingCliches.splice(idx, 1);
+  renderCliches();
+}
+
+function zoomCliche(id) {
+  const img = (pendingCliches.find(x=>x.id===id));
+  if (!img) return;
+  $('cliche-zoom-img').src = img.dataUrl;
+  $('modal-cliche-zoom').classList.add('open');
+}
+
+function zoomClicheUrl(dataUrl) {
+  $('cliche-zoom-img').src = dataUrl;
+  $('modal-cliche-zoom').classList.add('open');
 }
 
 function saveConsultation() {
@@ -958,6 +1008,7 @@ function saveConsultation() {
     ordonnance: $('consult-ordonnance').value,
     notes: $('consult-notes').value,
     medecinNom: medecinName(medId),
+    cliches: [...pendingCliches],
   };
 
   if (editId) {
@@ -978,6 +1029,22 @@ function viewConsultation(id) {
   const c = getAll('consultations').find(x => x.id === id);
   if (!c) return;
   const p = getPatient(c.patientId);
+
+  const clichesHtml = c.cliches && c.cliches.length ? `
+    <div class="consult-detail-section">
+      <h4>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Clichés & Imagerie (${c.cliches.length})
+      </h4>
+      <div class="cliche-gallery">
+        ${c.cliches.map(img => `
+          <div class="cliche-thumb" onclick="zoomClicheUrl('${img.dataUrl}')">
+            <img src="${img.dataUrl}" alt="${img.name}" loading="lazy"/>
+            <div class="cliche-label">${img.name.length > 18 ? img.name.substring(0,16)+'…' : img.name}</div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
   $('modal-consult-view-title').textContent = `Consultation du ${fmtDate(c.date)}`;
   $('modal-consult-view-body').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;background:var(--blue-bg);border-radius:var(--radius);">
@@ -985,19 +1052,143 @@ function viewConsultation(id) {
       <div>
         <div style="font-weight:600;font-size:15px;">${p ? fullName(p) : '—'}</div>
         <div style="font-size:12px;color:var(--text2);">${medecinName(c.medecinId)} · ${fmtDate(c.date)}</div>
+        ${p && p.numChifa ? `<div style="font-size:11px;color:var(--teal-text);margin-top:2px;font-family:monospace;">🪪 Chifa : ${formatChifa(p.numChifa)}</div>` : ''}
       </div>
     </div>
     ${c.motif ? `<div class="consult-detail-section"><h4>Motif</h4><p>${c.motif}</p></div>` : ''}
     ${c.examen ? `<div class="consult-detail-section"><h4>Examen clinique</h4><p>${c.examen}</p></div>` : ''}
     ${c.diagnostic ? `<div class="consult-detail-section"><h4>Diagnostic</h4><p style="font-weight:500;">${c.diagnostic}</p></div>` : ''}
-    ${c.ordonnance ? `<div class="consult-detail-section"><h4>Ordonnance</h4><div class="consult-ordo">${c.ordonnance}</div></div>` : ''}
+    ${c.ordonnance ? `<div class="consult-detail-section"><h4>Ordonnance</h4><div class="consult-ordo">${c.ordonnance.replace(/\n/g,'<br>')}</div></div>` : ''}
+    ${clichesHtml}
     ${c.notes ? `<div class="consult-detail-section"><h4>Notes internes</h4><p style="color:var(--text2);">${c.notes}</p></div>` : ''}
   `;
   $('consult-view-edit-btn').onclick = () => {
     closeModal('modal-consult-view');
     openModal('modal-consultation', c);
   };
+  // Show ordonnance print button only if there's an ordonnance
+  const ordobtn = $('consult-view-ordo-btn');
+  if (ordobtn) {
+    ordobtn.style.display = c.ordonnance ? 'inline-flex' : 'none';
+    ordobtn.onclick = () => printOrdonnance(id);
+  }
   openModal('modal-consult-view', null);
+}
+
+function previewOrdonnanceModal() {
+  // Build a temp consultation from current form values to preview ordonnance
+  const patId = $('consult-patient').value;
+  const medId = $('consult-medecin').value;
+  const ordText = $('consult-ordonnance').value;
+  if (!ordText) { toast('Saisissez d\'abord les médicaments dans l\'ordonnance', 'error'); return; }
+  const tempId = 'preview_temp';
+  const tempC = {
+    id: tempId, patientId: patId, medecinId: medId,
+    date: $('consult-date').value || getTodayStr(),
+    diagnostic: $('consult-diagnostic').value,
+    ordonnance: ordText
+  };
+  // Temporarily store
+  const all = getAll('consultations');
+  const existing = all.findIndex(x => x.id === tempId);
+  if (existing >= 0) all[existing] = tempC; else all.push(tempC);
+  saveAll('consultations', all);
+  printOrdonnance(tempId);
+}
+
+function printOrdonnance(consultId) {
+  const c = getAll('consultations').find(x => x.id === consultId);
+  if (!c) return;
+  const p = getPatient(c.patientId);
+  const med = getAll('medecins').find(m => m.id === c.medecinId);
+  const settings = dbGet('settings') || SEED.settings;
+
+  const org = p && p.organisme && p.organisme !== 'aucun'
+    ? (ORGANISMES_ASSURANCE.find(o => o.id === p.organisme) || null) : null;
+
+  const numOrdo = 'ORD-' + (c.date || getTodayStr()).replace(/-/g,'') + '-' + consultId.slice(-4).toUpperCase();
+
+  const ordonnanteLines = (c.ordonnance || '').split('\n')
+    .filter(l => l.trim())
+    .map((l, i) => `<div class="ordo-line"><span class="ordo-num">${i+1}</span><span>${l}</span></div>`)
+    .join('');
+
+  $('modal-ordonnance-body').innerHTML = `
+    <div class="ordonnance-print" id="ordo-print-content">
+      <!-- EN-TÊTE CLINIQUE -->
+      <div class="ordo-header">
+        <div class="ordo-clinic-info">
+          <div class="ordo-clinic-name">${settings.clinique || 'MediCare DZ'}</div>
+          <div class="ordo-clinic-addr">${settings.adresse || ''} — ${settings.wilaya || ''}</div>
+          <div class="ordo-clinic-contact">Tél : ${settings.tel || '—'} ${settings.fax ? '· Fax : '+settings.fax : ''}</div>
+          ${settings.numAgrementSante ? `<div class="ordo-clinic-contact">N° Agrément : <strong>${settings.numAgrementSante}</strong></div>` : ''}
+        </div>
+        <div class="ordo-num-box">
+          <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">N° Ordonnance</div>
+          <div style="font-size:14px;font-weight:700;font-family:monospace;">${numOrdo}</div>
+          <div style="font-size:12px;margin-top:4px;">Date : <strong>${fmtDate(c.date || getTodayStr())}</strong></div>
+        </div>
+      </div>
+
+      <hr class="ordo-hr"/>
+
+      <!-- MÉDECIN + PATIENT -->
+      <div class="ordo-parties">
+        <div class="ordo-medecin-box">
+          <div class="ordo-section-lbl">Médecin prescripteur</div>
+          ${med ? `
+            <div class="ordo-name">Dr. ${fullName(med)}</div>
+            <div class="ordo-spec">${med.specialite || ''}</div>
+            <div class="ordo-detail">N° Inscription ONML : <strong>${med.numInscription || '—'}</strong></div>
+            ${med.convention ? `<div class="ordo-detail">Convention : <strong>${med.convention}</strong></div>` : ''}
+            ${settings.numConventionCNAS && med.convention === 'CNAS' ? `<div class="ordo-detail">N° Conv. CNAS : <strong>${settings.numConventionCNAS}</strong></div>` : ''}
+            ${settings.numConventionCASNOS && med.convention === 'CASNOS' ? `<div class="ordo-detail">N° Conv. CASNOS : <strong>${settings.numConventionCASNOS}</strong></div>` : ''}
+          ` : '<div style="color:#9ca3af;">Médecin non renseigné</div>'}
+        </div>
+        <div class="ordo-patient-box">
+          <div class="ordo-section-lbl">Patient</div>
+          ${p ? `
+            <div class="ordo-name">${fullName(p)}</div>
+            <div class="ordo-detail">Né(e) le : ${p.dob ? fmtDate(p.dob) : '—'} · ${calcAge(p.dob)}</div>
+            ${p.wilaya ? `<div class="ordo-detail">Wilaya : ${p.wilaya}</div>` : ''}
+            ${p.numChifa ? `<div class="ordo-detail">N° Chifa : <strong style="font-family:monospace;">${formatChifa(p.numChifa)}</strong></div>` : ''}
+            ${org ? `<div class="ordo-detail">Organisme : <strong>${org.label}</strong> (${org.taux}%)</div>` : ''}
+            ${p.typeCas ? `<div class="ordo-detail">Type de cas : <strong>${p.typeCas}</strong></div>` : ''}
+          ` : '<div style="color:#9ca3af;">Patient non renseigné</div>'}
+        </div>
+      </div>
+
+      ${c.diagnostic ? `<div style="background:#fefce8;border-left:3px solid #eab308;padding:8px 12px;font-size:12px;margin:10px 0;border-radius:0 4px 4px 0;">
+        <span style="font-weight:700;text-transform:uppercase;font-size:10px;color:#854d0e;">Diagnostic : </span>${c.diagnostic}
+      </div>` : ''}
+
+      <hr class="ordo-hr"/>
+
+      <!-- CORPS ORDONNANCE -->
+      <div class="ordo-rx-title">
+        <span style="font-size:20px;font-weight:900;font-style:italic;margin-right:8px;">Rx</span>
+        <span>Prescription médicale</span>
+      </div>
+      <div class="ordo-lines">${ordonnanteLines || '<p style="color:#9ca3af;">Aucun médicament prescrit</p>'}</div>
+
+      <hr class="ordo-hr" style="margin-top:30px;"/>
+
+      <!-- PIED DE PAGE -->
+      <div class="ordo-footer">
+        <div class="ordo-cachet">
+          <div class="ordo-section-lbl">Cachet & Signature du médecin</div>
+          <div class="ordo-cachet-box">
+            ${med ? `Dr. ${fullName(med)}<br/>${med.specialite||''}<br/>${med.numInscription||''}` : ''}
+          </div>
+        </div>
+        <div class="ordo-validity">
+          <div style="font-size:10px;color:#9ca3af;">Document valable 3 mois</div>
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px;">Ordonnance originale — ne pas photocopier</div>
+        </div>
+      </div>
+    </div>`;
+
+  openModal('modal-ordonnance', null);
 }
 
 function deleteConsultation(id) {

@@ -671,8 +671,27 @@
         <div class="form-group"><label>Motif *</label><input id="consult-motif" type="text" placeholder="Motif de la consultation…"/></div>
         <div class="form-group" style="grid-column:1/-1"><label>Examen clinique</label><textarea id="consult-examen" placeholder="Résultats de l'examen physique, constantes…" style="min-height:80px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1"><label>Diagnostic</label><textarea id="consult-diagnostic" placeholder="Diagnostic principal…"></textarea></div>
-        <div class="form-group" style="grid-column:1/-1"><label>Ordonnance</label><textarea id="consult-ordonnance" placeholder="Médicaments, posologie, durée…" style="min-height:100px;font-family:monospace;"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;justify-content:space-between;">
+            Ordonnance
+            <span style="font-weight:400;font-size:11px;color:var(--blue-text);cursor:pointer;" onclick="previewOrdonnanceModal()">👁 Aperçu ordonnance</span>
+          </label>
+          <textarea id="consult-ordonnance" placeholder="Ex :&#10;Amoxicilline 1g — 2 fois/j pendant 7 jours&#10;Ibuprofène 400mg — si douleurs&#10;Repos recommandé" style="min-height:120px;font-family:monospace;"></textarea>
+        </div>
         <div class="form-group" style="grid-column:1/-1"><label>Notes internes</label><textarea id="consult-notes" placeholder="Notes à usage interne uniquement…" style="min-height:60px;"></textarea></div>
+        <!-- Clichés imagerie -->
+        <div class="form-group" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;gap:8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Clichés & Imagerie (Radio, Scanner, IRM, Écho…)
+          </label>
+          <div class="cliche-upload-zone" onclick="$('consult-cliche-input').click()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>Cliquer pour ajouter des images<br/><small>JPG, PNG, DICOM-preview — max 5 Mo chacune</small></span>
+          </div>
+          <input type="file" id="consult-cliche-input" accept="image/*" multiple style="display:none;" onchange="addCliches(this)"/>
+          <div id="consult-cliche-preview" class="cliche-preview-grid"></div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -692,8 +711,40 @@
     <div class="modal-body" id="modal-consult-view-body"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-consult-view')">Fermer</button>
+      <button class="btn btn-teal" id="consult-view-ordo-btn" style="display:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimer ordonnance
+      </button>
       <button class="btn" id="consult-view-edit-btn">Modifier</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal Ordonnance Print -->
+<div class="overlay" id="modal-ordonnance">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:#ecfdf5">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      </div>
+      <h2 class="modal-title">Ordonnance médicale</h2>
+      <button class="modal-close" onclick="closeModal('modal-ordonnance')">×</button>
+    </div>
+    <div class="modal-body" id="modal-ordonnance-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ordonnance')">Fermer</button>
+      <button class="btn btn-primary" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cliché Zoom -->
+<div class="overlay" id="modal-cliche-zoom" onclick="closeModal('modal-cliche-zoom')">
+  <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:20px;">
+    <img id="cliche-zoom-img" style="max-width:90vw;max-height:85vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5);" src=""/>
   </div>
 </div>
 
