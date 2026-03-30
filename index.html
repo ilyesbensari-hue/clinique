@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MediCare DZ — Gestion Clinique</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN SCREEN
+     ============================================================ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h1>MediCare DZ</h1>
+      <p>Système de gestion clinique</p>
+    </div>
+    <div class="login-form">
+      <div class="form-group">
+        <label>Identifiant</label>
+        <input type="text" id="login-user" placeholder="admin" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <div id="login-err" class="login-error">Identifiant ou mot de passe incorrect</div>
+      <button class="login-btn" onclick="doLogin()">Se connecter</button>
+    </div>
+    <div class="login-demo">
+      Demo : <strong>admin</strong> / <strong>admin123</strong> &nbsp;·&nbsp; <strong>reception</strong> / <strong>recep123</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div id="app" class="hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div>
+        <div class="logo-text">MediCare DZ</div>
+        <div class="logo-sub" id="clinic-name-sidebar">Clinique El Shifa</div>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" data-page="dashboard" onclick="goPage('dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Tableau de bord
+      </div>
+      <div class="nav-section">Gestion</div>
+      <div class="nav-item" data-page="patients" onclick="goPage('patients')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Patients
+        <span class="nav-badge" id="badge-patients">0</span>
+      </div>
+      <div class="nav-item" data-page="medecins" onclick="goPage('medecins')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Médecins
+      </div>
+      <div class="nav-item" data-page="rdv" onclick="goPage('rdv')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Rendez-vous
+        <span class="nav-badge" id="badge-rdv">0</span>
+      </div>
+      <div class="nav-item" data-page="planning" onclick="goPage('planning')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        Planning
+      </div>
+      <div class="nav-item" data-page="consultations" onclick="goPage('consultations')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Consultations
+      </div>
+      <div class="nav-section">Finance</div>
+      <div class="nav-item" data-page="facturation" onclick="goPage('facturation')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Facturation
+      </div>
+      <div class="nav-section">Système</div>
+      <div class="nav-item" data-page="parametres" onclick="goPage('parametres')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Paramètres
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="avatar av-blue" id="sidebar-avatar">AD</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Admin</div>
+        <div class="sidebar-user-role" id="sidebar-role">Administrateur</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Déconnexion">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+    <header class="topbar">
+      <h1 class="topbar-title" id="page-title">Tableau de bord</h1>
+      <span class="topbar-date" id="topbar-date"></span>
+      <button class="topbar-btn" onclick="openModal('modal-rdv', null)" title="Nouveau RDV">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </header>
+
+    <div class="content">
+
+      <!-- ================================================
+           DASHBOARD
+           ================================================ -->
+      <div class="page active" id="page-dashboard">
+        <div class="welcome-bar">
+          <div>
+            <h2 id="welcome-msg">Bonjour !</h2>
+            <p id="welcome-sub">Voici le résumé de la journée</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-rdv', null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau RDV
+          </button>
+        </div>
+        <div class="metrics-grid" id="dash-metrics"></div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">RDV du jour</span>
+              <button class="btn btn-sm" onclick="goPage('rdv')">Voir tout</button>
+            </div>
+            <div id="dash-rdv-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Médecins disponibles</span>
+              <button class="btn btn-sm" onclick="goPage('medecins')">Voir tout</button>
+            </div>
+            <div id="dash-docs-list"></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Dernières consultations</span>
+              <button class="btn btn-sm" onclick="goPage('consultations')">Voir tout</button>
+            </div>
+            <div id="dash-consults-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Facturation récente</span>
+              <button class="btn btn-sm" onclick="goPage('facturation')">Voir tout</button>
+            </div>
+            <div id="dash-fact-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           PATIENTS
+           ================================================ -->
+      <div class="page" id="page-patients">
+        <div class="search-row">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="patient-search" placeholder="Rechercher un patient…" oninput="renderPatients()"/>
+          </div>
+          <select id="patient-filter-medecin" onchange="renderPatients()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+            <option value="">Tous les médecins</option>
+          </select>
+          <select id="patient-filter-status" onchange="renderPatients()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+            <option value="">Tous les statuts</option>
+            <option value="Actif">Actif</option>
+            <option value="Inactif">Inactif</option>
+          </select>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" onclick="openModal('modal-patient', null)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouveau patient
+            </button>
+          </div>
+        </div>
+        <div class="patient-stats" id="patient-stats"></div>
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>N° Dossier</th>
+                  <th>Âge</th>
+                  <th>Téléphone</th>
+                  <th>Médecin référent</th>
+                  <th>Mutuelle</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="patients-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           MÉDECINS
+           ================================================ -->
+      <div class="page" id="page-medecins">
+        <div class="search-row">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="medecin-search" placeholder="Rechercher un médecin…" oninput="renderMedecins()"/>
+          </div>
+          <select id="medecin-filter-spec" onchange="renderMedecins()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+            <option value="">Toutes spécialités</option>
+          </select>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" onclick="openModal('modal-medecin', null)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouveau médecin
+            </button>
+          </div>
+        </div>
+        <div class="doctors-grid" id="doctors-grid"></div>
+      </div>
+
+      <!-- ================================================
+           RENDEZ-VOUS
+           ================================================ -->
+      <div class="page" id="page-rdv">
+        <div class="search-row">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="rdv-search" placeholder="Rechercher…" oninput="renderRDV()"/>
+          </div>
+          <input type="date" id="rdv-filter-date" onchange="renderRDV()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+          <select id="rdv-filter-medecin" onchange="renderRDV()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+            <option value="">Tous les médecins</option>
+          </select>
+          <select id="rdv-filter-status" onchange="renderRDV()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+            <option value="">Tous statuts</option>
+            <option value="En attente">En attente</option>
+            <option value="Confirmé">Confirmé</option>
+            <option value="Présent">Présent</option>
+            <option value="Annulé">Annulé</option>
+          </select>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" onclick="openModal('modal-rdv', null)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouveau RDV
+            </button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date & Heure</th>
+                  <th>Patient</th>
+                  <th>Médecin</th>
+                  <th>Motif</th>
+                  <th>Type</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rdv-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           PLANNING
+           ================================================ -->
+      <div class="page" id="page-planning">
+        <div class="planning-nav">
+          <button class="btn" onclick="shiftWeek(-1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <h3 id="planning-title">Planning</h3>
+          <button class="btn" onclick="shiftWeek(1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="btn btn-sm" onclick="weekOffset=0;renderPlanning()">Aujourd'hui</button>
+          <div style="margin-left:auto">
+            <select id="planning-filter-medecin" onchange="renderPlanning()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+              <option value="">Tous les médecins</option>
+            </select>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:auto;">
+          <div id="planning-container" style="overflow-x:auto;padding:12px;"></div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           CONSULTATIONS
+           ================================================ -->
+      <div class="page" id="page-consultations">
+        <div class="search-row">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="consult-search" placeholder="Rechercher…" oninput="renderConsultations()"/>
+          </div>
+          <select id="consult-filter-medecin" onchange="renderConsultations()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+            <option value="">Tous les médecins</option>
+          </select>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" onclick="openModal('modal-consultation', null)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouvelle consultation
+            </button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Patient</th>
+                  <th>Médecin</th>
+                  <th>Motif</th>
+                  <th>Diagnostic</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="consultations-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           FACTURATION
+           ================================================ -->
+      <div class="page" id="page-facturation">
+        <div class="search-row">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="fact-search" placeholder="Rechercher…" oninput="renderFacturation()"/>
+          </div>
+          <select id="fact-filter-status" onchange="renderFacturation()" style="padding:8px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);">
+            <option value="">Tous statuts</option>
+            <option value="Payée">Payée</option>
+            <option value="En attente">En attente</option>
+            <option value="Annulée">Annulée</option>
+          </select>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" onclick="openModal('modal-facture', null)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouvelle facture
+            </button>
+          </div>
+        </div>
+        <div class="fact-summary" id="fact-summary"></div>
+        <div class="card" style="padding:0;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>N° Facture</th>
+                  <th>Patient</th>
+                  <th>Médecin</th>
+                  <th>Date</th>
+                  <th>Actes</th>
+                  <th>Total</th>
+                  <th>Paiement</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="fact-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           PARAMÈTRES
+           ================================================ -->
+      <div class="page" id="page-parametres">
+        <div class="grid2">
+          <div>
+            <div class="card">
+              <div class="settings-section">
+                <h3>Informations de la clinique</h3>
+                <div class="form-grid full">
+                  <div class="form-group"><label>Nom de la clinique</label><input id="cfg-name" type="text"/></div>
+                  <div class="form-group"><label>Slogan</label><input id="cfg-slogan" type="text"/></div>
+                  <div class="form-group"><label>Adresse</label><input id="cfg-addr" type="text"/></div>
+                  <div class="form-group"><label>Téléphone</label><input id="cfg-tel" type="text"/></div>
+                  <div class="form-group"><label>Email</label><input id="cfg-email" type="email"/></div>
+                  <div class="form-group"><label>N° Fiscal / NIS</label><input id="cfg-fiscal" type="text"/></div>
+                  <div class="form-group"><label>Horaires d'ouverture</label><input id="cfg-horaires" type="text"/></div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">Enregistrer</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="settings-section">
+                <h3>Gestion des comptes</h3>
+                <div id="users-list"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="settings-section">
+                <h3>
+                  Tarifs des actes
+                  <button class="btn btn-sm" style="margin-left:10px;" onclick="addTarifRow()">+ Ajouter</button>
+                </h3>
+                <div style="display:grid;grid-template-columns:1fr 120px 110px auto;gap:6px;margin-bottom:8px;">
+                  <div class="tarif-lbl">Libellé</div>
+                  <div class="tarif-lbl">Catégorie</div>
+                  <div class="tarif-lbl">Montant (DA)</div>
+                  <div></div>
+                </div>
+                <div id="tarifs-list"></div>
+                <button class="btn btn-success" style="margin-top:10px;" onclick="saveTarifs()">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Enregistrer les tarifs
+                </button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="settings-section">
+                <h3>Données</h3>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                  <button class="btn" onclick="exportData()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Exporter (JSON)
+                  </button>
+                  <label class="btn" style="cursor:pointer;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Importer (JSON)
+                    <input type="file" accept=".json" style="display:none;" onchange="importData(event)"/>
+                  </label>
+                  <button class="btn btn-danger" onclick="if(confirm('Réinitialiser toutes les données ?')) { resetDB(); renderPage(currentPage); toast('Données réinitialisées', 'warning'); }">
+                    Réinitialiser
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main-area -->
+</div><!-- /app -->
+
+
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
+
+<!-- Modal Patient Add/Edit -->
+<div class="overlay" id="modal-patient">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-icon av-blue" style="background:var(--blue-bg)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <h2 class="modal-title" id="modal-patient-title">Nouveau patient</h2>
+      <button class="modal-close" onclick="closeModal('modal-patient')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="patient-edit-id"/>
+      <div class="form-divider" style="grid-column:1/-1">Identité</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Prénom *</label><input id="p-prenom" type="text" placeholder="Prénom"/></div>
+        <div class="form-group"><label>Nom *</label><input id="p-nom" type="text" placeholder="Nom de famille"/></div>
+        <div class="form-group"><label>Date de naissance</label><input id="p-dob" type="date"/></div>
+        <div class="form-group"><label>Genre</label>
+          <select id="p-genre"><option value="M">Masculin</option><option value="F">Féminin</option></select>
+        </div>
+        <div class="form-group"><label>Téléphone</label><input id="p-tel" type="tel" placeholder="0550 12 34 56"/></div>
+        <div class="form-group"><label>Email</label><input id="p-email" type="email" placeholder="email@exemple.com"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Adresse</label><input id="p-adresse" type="text" placeholder="Adresse complète"/></div>
+      </div>
+      <div class="form-divider">Informations médicales</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Groupe sanguin</label>
+          <select id="p-groupe"><option value="">-- Inconnu --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
+        </div>
+        <div class="form-group"><label>Mutuelle / Assurance</label>
+          <select id="p-mutuelle"><option value="Aucune">Aucune</option><option value="CNAS">CNAS</option><option value="CASNOS">CASNOS</option><option value="Retraite">Retraite</option><option value="Militaire">Militaire</option><option value="Autre">Autre</option></select>
+        </div>
+        <div class="form-group"><label>Médecin référent</label>
+          <select id="p-medecin-ref"></select>
+        </div>
+        <div class="form-group"><label>Statut</label>
+          <select id="p-statut"><option value="Actif">Actif</option><option value="Inactif">Inactif</option></select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1"><label>Antécédents médicaux</label><textarea id="p-antecedents" placeholder="Maladies chroniques, chirurgies passées…"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Allergies</label><input id="p-allergies" type="text" placeholder="Pénicilline, latex, arachides…"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Traitement en cours</label><textarea id="p-traitement" placeholder="Médicaments et posologie…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-patient')">Annuler</button>
+      <button class="btn btn-primary" onclick="savePatient()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Patient Detail -->
+<div class="overlay" id="modal-patient-detail">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-patient-detail-title">Dossier patient</h2>
+      <button class="modal-close" onclick="closeModal('modal-patient-detail')">×</button>
+    </div>
+    <div class="modal-body" id="modal-patient-detail-body"></div>
+    <div class="modal-footer" id="modal-patient-detail-footer"></div>
+  </div>
+</div>
+
+<!-- Modal Médecin Add/Edit -->
+<div class="overlay" id="modal-medecin">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--green-bg)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h2 class="modal-title" id="modal-medecin-title">Nouveau médecin</h2>
+      <button class="modal-close" onclick="closeModal('modal-medecin')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="med-edit-id"/>
+      <div class="form-grid">
+        <div class="form-group"><label>Prénom *</label><input id="med-prenom" type="text" placeholder="Prénom"/></div>
+        <div class="form-group"><label>Nom *</label><input id="med-nom" type="text" placeholder="Nom"/></div>
+        <div class="form-group"><label>Spécialité *</label>
+          <select id="med-specialite">
+            <option>Médecine Générale</option><option>Cardiologie</option><option>Pédiatrie</option>
+            <option>Dermatologie</option><option>Ophtalmologie</option><option>Gynécologie</option>
+            <option>Neurologie</option><option>Orthopédie</option><option>Pneumologie</option>
+            <option>Gastro-entérologie</option><option>Endocrinologie</option><option>Urologie</option>
+            <option>ORL</option><option>Rhumatologie</option><option>Psychiatrie</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Genre</label>
+          <select id="med-genre"><option value="M">M.</option><option value="F">Mme.</option></select>
+        </div>
+        <div class="form-group"><label>Téléphone</label><input id="med-tel" type="tel" placeholder="0550 12 34 56"/></div>
+        <div class="form-group"><label>Email</label><input id="med-email" type="email" placeholder="dr.nom@clinique.dz"/></div>
+        <div class="form-group"><label>Expérience</label><input id="med-experience" type="text" placeholder="10 ans"/></div>
+        <div class="form-group"><label>Tarif consultation (DA)</label><input id="med-consultation" type="number" placeholder="3000"/></div>
+        <div class="form-group"><label>Horaires</label><input id="med-horaires" type="text" placeholder="08:00-17:00"/></div>
+        <div class="form-group"><label>Statut</label>
+          <select id="med-status"><option value="Disponible">Disponible</option><option value="Absent">Absent</option><option value="Congé">Congé</option></select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1"><label>Jours de présence</label>
+          <div id="med-jours-checks" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-medecin')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveMedecin()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal RDV Add/Edit -->
+<div class="overlay" id="modal-rdv">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--amber-bg)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <h2 class="modal-title" id="modal-rdv-title">Nouveau rendez-vous</h2>
+      <button class="modal-close" onclick="closeModal('modal-rdv')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rdv-edit-id"/>
+      <div class="form-grid">
+        <div class="form-group"><label>Patient *</label><select id="rdv-patient"></select></div>
+        <div class="form-group"><label>Médecin *</label><select id="rdv-medecin"></select></div>
+        <div class="form-group"><label>Date *</label><input id="rdv-date" type="date"/></div>
+        <div class="form-group"><label>Heure *</label>
+          <select id="rdv-heure">
+            <option>08:00</option><option>08:30</option><option>09:00</option><option>09:30</option>
+            <option>10:00</option><option>10:30</option><option>11:00</option><option>11:30</option>
+            <option>12:00</option><option>12:30</option><option>13:00</option><option>13:30</option>
+            <option>14:00</option><option>14:30</option><option>15:00</option><option>15:30</option>
+            <option>16:00</option><option>16:30</option><option>17:00</option><option>17:30</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Type</label>
+          <select id="rdv-type"><option>Consultation</option><option>Examen</option><option>Chirurgie</option><option>Urgence</option><option>Contrôle</option></select>
+        </div>
+        <div class="form-group"><label>Statut</label>
+          <select id="rdv-status"><option>En attente</option><option>Confirmé</option><option>Présent</option><option>Annulé</option></select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1"><label>Motif *</label><input id="rdv-motif" type="text" placeholder="Raison de la consultation…"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Notes</label><textarea id="rdv-notes" placeholder="Informations complémentaires…" style="min-height:60px;"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-rdv')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveRDV()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Consultation -->
+<div class="overlay" id="modal-consultation">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--teal-bg)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <h2 class="modal-title" id="modal-consultation-title">Nouvelle consultation</h2>
+      <button class="modal-close" onclick="closeModal('modal-consultation')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="consult-edit-id"/>
+      <div class="form-grid">
+        <div class="form-group"><label>Patient *</label><select id="consult-patient"></select></div>
+        <div class="form-group"><label>Médecin *</label><select id="consult-medecin"></select></div>
+        <div class="form-group"><label>Date *</label><input id="consult-date" type="date"/></div>
+        <div class="form-group"><label>Motif *</label><input id="consult-motif" type="text" placeholder="Motif de la consultation…"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Examen clinique</label><textarea id="consult-examen" placeholder="Résultats de l'examen physique, constantes…" style="min-height:80px;"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Diagnostic</label><textarea id="consult-diagnostic" placeholder="Diagnostic principal…"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Ordonnance</label><textarea id="consult-ordonnance" placeholder="Médicaments, posologie, durée…" style="min-height:100px;font-family:monospace;"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Notes internes</label><textarea id="consult-notes" placeholder="Notes à usage interne uniquement…" style="min-height:60px;"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-consultation')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveConsultation()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Consultation View -->
+<div class="overlay" id="modal-consult-view">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-consult-view-title">Consultation du …</h2>
+      <button class="modal-close" onclick="closeModal('modal-consult-view')">×</button>
+    </div>
+    <div class="modal-body" id="modal-consult-view-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-consult-view')">Fermer</button>
+      <button class="btn" id="consult-view-edit-btn">Modifier</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Facture -->
+<div class="overlay" id="modal-facture">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--green-bg)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <h2 class="modal-title" id="modal-facture-title">Nouvelle facture</h2>
+      <button class="modal-close" onclick="closeModal('modal-facture')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fact-edit-id"/>
+      <div class="form-grid">
+        <div class="form-group"><label>Patient *</label><select id="fact-patient"></select></div>
+        <div class="form-group"><label>Médecin</label><select id="fact-medecin"></select></div>
+        <div class="form-group"><label>Date *</label><input id="fact-date" type="date"/></div>
+        <div class="form-group"><label>Mode de paiement</label>
+          <select id="fact-paiement"><option>Espèces</option><option>Chèque</option><option>Virement</option><option>CCP</option><option>CNAS</option></select>
+        </div>
+        <div class="form-group"><label>Statut</label>
+          <select id="fact-status"><option>En attente</option><option>Payée</option><option>Annulée</option></select>
+        </div>
+        <div class="form-group"><label>Notes</label><input id="fact-notes" type="text" placeholder="Remarques…"/></div>
+      </div>
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:10px;">Actes / Prestations</div>
+      <div id="fact-actes-container"></div>
+      <button class="btn btn-sm" onclick="addActeRow()" style="margin-bottom:12px;">+ Ajouter un acte</button>
+      <div class="fact-total-line">
+        <span class="lbl">Total :</span>
+        <span class="val" id="fact-total-display">0 DA</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-facture')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveFacture()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Invoice Preview -->
+<div class="overlay" id="modal-invoice">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 class="modal-title">Aperçu facture</h2>
+      <button class="modal-close" onclick="closeModal('modal-invoice')">×</button>
+    </div>
+    <div class="modal-body" id="invoice-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-invoice')">Fermer</button>
+      <button class="btn btn-primary" onclick="window.print()">Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
